@@ -1,0 +1,12 @@
+# Core dependencies for BlackRoom chat application
+Flask
+Flask-SocketIO
+requests
+beautifulsoup4
+psutil
+simple-websocket
+
+# Optional (uncomment one of the following for production-grade async workers)
+# eventlet
+# gevent
+# gevent-websocket

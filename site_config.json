@@ -1,0 +1,4 @@
+{
+  "title": "实时聊天室",
+  "description": "一个基于Flask-SocketIO的在线匿名实时聊天室"
+}

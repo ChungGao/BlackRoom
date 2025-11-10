@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理 - {{ site_title }}</title>
+    <style>
+        :root {
+            --bg-gradient-start: #0a0a0f;
+            --bg-gradient-end: #0d1117;
+            --container-bg: #010409;
+            --text-color: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #58a6ff;
+            --border-color: #30363d;
+            --card-bg: #161b22;
+            --card-hover: #1c2128;
+            --success-color: #238636;
+            --danger-color: #da3633;
+            --warning-color: #d29922;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--container-bg);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .rooms-table {
+            background: var(--container-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--card-bg);
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--card-hover);
+        }
+
+        .online-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .offline-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--text-secondary);
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-view {
+            background: var(--accent-color);
+            color: white;
+            margin-right: 5px;
+        }
+
+        .btn-view:hover {
+            opacity: 0.8;
+        }
+
+        .btn-delete {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            opacity: 0.8;
+        }
+
+        .config-form {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .btn-save {
+            padding: 10px 24px;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            opacity: 0.8;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--accent-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .message-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .message-item.system {
+            border-left-color: var(--text-secondary);
+        }
+
+        .message-username {
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-right: 8px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-left: 8px;
+        }
+
+        .file-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .file-item {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.8;
+        }
+
+        .file-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .badge-hashed {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .badge-orphaned {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .badge-active {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        /* 文件缩略图样式 */
+        .file-thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .file-thumbnail:hover {
+            transform: scale(1.1);
+        }
+
+        .file-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            border-radius: 6px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-icon:hover {
+            background: var(--card-hover);
+        }
+
+        /* 预览模态框 */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-modal.active {
+            display: flex;
+        }
+
+        .preview-content {
+            max-width: 90%;
+            max-height: 90vh;
+            position: relative;
+        }
+
+        .preview-content img,
+        .preview-content video,
+        .preview-content audio {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+        }
+
+        .preview-content iframe {
+            width: 90vw;
+            height: 85vh;
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .preview-header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--container-bg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            z-index: 2001;
+        }
+
+        .preview-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 2001;
+            transition: transform 0.2s;
+        }
+
+        .preview-close:hover {
+            transform: scale(1.1);
+        }
+
+        .preview-download {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 2001;
+            transition: opacity 0.2s;
+        }
+
+        .preview-download:hover {
+            opacity: 0.8;
+        }
+
+        .text-preview {
+            background: var(--container-bg);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 后台管理系统</h1>
+            <div>
+                <button class="refresh-btn" style="margin-right: 10px;" onclick="window.location.href='/admin/logout'">🚪 退出登录</button>
+                <a href="/" class="back-btn">← 返回聊天室</a>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('overview')">概览</button>
+            <button class="tab-btn" onclick="switchTab('rooms')">房间管理</button>
+            <button class="tab-btn" onclick="switchTab('files')">文件管理</button>
+            <button class="tab-btn" onclick="switchTab('config')">网站配置</button>
+            <button class="tab-btn" onclick="switchTab('ollama')">AI设置</button>
+            <button class="tab-btn" onclick="switchTab('account')">账户管理</button>
+        </div>
+
+        <!-- 概览标签页 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>服务器状态</h3>
+                    <div class="value" id="stat-status" style="font-size: 20px;">
+                        <span style="color: var(--success-color);">● 运行中</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>运行时长</h3>
+                    <div class="value" id="stat-uptime" style="font-size: 18px;">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>总房间数</h3>
+                    <div class="value" id="stat-rooms">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>总消息数</h3>
+                    <div class="value" id="stat-messages">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>总文件数</h3>
+                    <div class="value" id="stat-files">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>文件总大小</h3>
+                    <div class="value" id="stat-size">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>在线用户</h3>
+                    <div class="value" id="stat-online">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>AI请求次数</h3>
+                    <div class="value" id="stat-ai-requests">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>AI成功率</h3>
+                    <div class="value" id="stat-ai-success-rate">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>启动时间</h3>
+                    <div class="value" id="stat-starttime" style="font-size: 16px;">-</div>
+                </div>
+            </div>
+            
+            <!-- 服务器配置信息 -->
+            <div class="rooms-table" style="margin-top: 20px;">
+                <div style="padding: 15px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-color); margin: 0;">🛠️ 服务器信息</h3>
+                </div>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">Python 版本</td>
+                            <td id="config-python">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">操作系统</td>
+                            <td id="config-os">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">处理器</td>
+                            <td id="config-processor">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">RAM大小</td>
+                            <td id="config-memory">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">磁盘大小</td>
+                            <td id="config-disk">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">文件上传限制</td>
+                            <td id="config-maxsize">-</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 200px; font-weight: 600; color: var(--text-secondary);">文件缓存目录</td>
+                            <td id="config-uploadfolder">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 房间管理标签页 -->
+        <div id="tab-rooms" class="tab-content">
+            <div style="margin-bottom: 15px;">
+                <button class="refresh-btn" onclick="loadRooms()">🔄 刷新列表</button>
+            </div>
+            <div class="rooms-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>房间ID</th>
+                            <th>消息数</th>
+                            <th>文件数</th>
+                            <th>文件大小</th>
+                            <th>在线用户</th>
+                            <th>最后活跃</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rooms-tbody">
+                        <tr>
+                            <td colspan="7" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 文件管理标签页 -->
+        <div id="tab-files" class="tab-content">
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button class="refresh-btn" onclick="loadFiles()">🔄 刷新列表</button>
+                <button class="btn-delete" style="padding: 8px 16px; border-radius: 6px; font-size: 14px;" onclick="cleanupOrphanedFiles()">🧹 清理孤立文件</button>
+                
+                <!-- 文件类型筛选 -->
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <label style="color: var(--text-secondary); font-size: 14px;">类型筛选：</label>
+                    <select id="file-type-filter" onchange="filterFilesByType()" style="padding: 6px 12px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        <option value="all">全部文件</option>
+                        <option value="image">🖼️ 图片</option>
+                        <option value="video">🎥 视频</option>
+                        <option value="audio">🎵 音频</option>
+                        <option value="pdf">📝 PDF</option>
+                        <option value="text">📄 文本</option>
+                        <option value="archive">🗄️ 压缩包</option>
+                        <option value="word">📃 Word</option>
+                        <option value="excel">📈 Excel</option>
+                        <option value="powerpoint">📊 PPT</option>
+                        <option value="other">📁 其他</option>
+                    </select>
+                </div>
+                
+                <!-- 批量操作 -->
+                <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                    <button id="select-all-btn" class="action-btn btn-view" onclick="toggleSelectAll()" style="display: none;">☑️ 全选</button>
+                    <button id="batch-delete-btn" class="btn-delete" style="padding: 8px 16px; border-radius: 6px; font-size: 14px; display: none;" onclick="batchDeleteFiles()">🗑️ 批量删除</button>
+                    <span id="selected-count" style="color: var(--text-secondary); font-size: 14px; display: none;"></span>
+                </div>
+            </div>
+            <div class="rooms-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()" style="display: none;"></th>
+                            <th>缩略图</th>
+                            <th>文件名</th>
+                            <th>文件大小</th>
+                            <th>修改时间</th>
+                            <th>引用房间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="files-tbody">
+                        <tr>
+                            <td colspan="8" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 网站配置标签页 -->
+        <div id="tab-config" class="tab-content">
+            <div class="config-form">
+                <h2 style="margin-bottom: 20px; color: var(--accent-color);">网站配置</h2>
+                <div class="form-group">
+                    <label>网站标题</label>
+                    <input type="text" id="config-title" placeholder="实时聊天室">
+                </div>
+                <div class="form-group">
+                    <label>网站描述</label>
+                    <textarea id="config-description" rows="3" placeholder="一个基于Flask-SocketIO的实时聊天应用"></textarea>
+                </div>
+                <button class="btn-save" onclick="saveConfig()">💾 保存配置</button>
+            </div>
+        </div>
+
+        <!-- 账户管理标签页 -->
+        <div id="tab-account" class="tab-content">
+            <div class="config-form">
+                <h2 style="margin-bottom: 20px; color: var(--accent-color);">管理员账户管理</h2>
+                <div class="form-group">
+                    <label>新用户名（留空则不修改）</label>
+                    <input type="text" id="new-username" placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label>原密码</label>
+                    <input type="password" id="old-password" placeholder="请输入原密码" required>
+                </div>
+                <div class="form-group">
+                    <label>新密码（留空则不修改）</label>
+                    <input type="password" id="new-password" placeholder="请输入新密码">
+                </div>
+                <div class="form-group">
+                    <label>确认新密码</label>
+                    <input type="password" id="confirm-password" placeholder="再次输入新密码">
+                </div>
+                <button class="btn-save" onclick="changePassword()">🔑 更新账户信息</button>
+            </div>
+        </div>
+
+        <!-- Ollama AI设置标签页 -->
+        <div id="tab-ollama" class="tab-content" style="max-width: none; width: 100%;">
+            <div class="config-form" style="max-width: none; width: 100%;">
+                <div class="ai-topbar" style="display: flex; gap: 16px; align-items: center; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 18px;">
+                    <div class="top-item" style="display: flex; align-items: center; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                            <input type="checkbox" id="global-ai-enabled" style="width: auto;">
+                            启用 AI 功能
+                        </label>
+                        <small style="color: var(--text-secondary);">全局开关，根据默认提供方生效</small>
+                    </div>
+                    <div class="top-item" style="display: flex; align-items: center; gap: 10px;">
+                        <label style="margin: 0;">默认AI提供方</label>
+                        <select id="ai-provider" style="padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);">
+                            <option value="ollama">Ollama</option>
+                            <option value="thirdparty">第三方API</option>
+                        </select>
+                    </div>
+                    <div class="top-item" style="margin-left: auto;">
+                        <button class="btn-save" onclick="saveAISettings()">💾 保存当前设置</button>
+                    </div>
+                </div>
+
+                <div class="ai-settings-grid" style="display: grid; grid-template-columns: repeat(2, minmax(360px, 1fr)); gap: 20px; align-items: start;">
+                    <!-- 左侧：Ollama 设置 -->
+                    <div class="ai-panel" style="padding: 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; line-height: 1.6; word-break: break-word;">
+                        <h2 style="margin-bottom: 20px; color: var(--accent-color);">🤖 Ollama 设置</h2>
+
+                        <input type="checkbox" id="ollama-enabled" style="display:none;">
+
+                <div class="form-group">
+                    <label>Ollama API 地址</label>
+                    <input type="text" id="ollama-api-url" placeholder="http://localhost:11434">
+                    <small style="color: var(--text-secondary);">本地Ollama服务地址，默认端口11434</small>
+                </div>
+
+                <div class="form-group">
+                    <label>模型名称</label>
+                    <input type="text" id="ollama-model" placeholder="qwen2.5:latest">
+                    <small style="color: var(--text-secondary);">使用的模型名称，例如: qwen2.5:latest, llama3:latest</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Temperature (创造性)</label>
+                    <input type="number" id="ollama-temperature" min="0" max="2" step="0.1" placeholder="0.7">
+                    <small style="color: var(--text-secondary);">0-2之间，值越大回答越有创造性，建议0.7</small>
+                </div>
+
+                <div class="form-group">
+                    <label>最大回复长度</label>
+                    <input type="number" id="ollama-max-tokens" min="100" max="4000" step="100" placeholder="2000">
+                    <small style="color: var(--text-secondary);">AI单次回复的最大字数</small>
+                </div>
+
+                <div class="form-group">
+                    <label>系统提示词</label>
+                    <textarea id="ollama-system-prompt" rows="4" placeholder="你是一个友好的AI助手..."></textarea>
+                    <small style="color: var(--text-secondary);">定义AI的角色和行为方式</small>
+                </div>
+
+                <div class="form-group">
+                    <label>AI助手昵称</label>
+                    <input type="text" id="ollama-ai-name" placeholder="AI助手">
+                    <small style="color: var(--text-secondary);">聊天室中显示的AI默认昵称，用户可在聊天室内临时修改</small>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-save" style="background: var(--accent-color);" onclick="testOllamaConnection()">🔌 测试Ollama连接</button>
+                </div>
+                
+                        <div id="ollama-test-result" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
+                    </div>
+
+                    <!-- 右侧：第三方设置 -->
+                    <div class="ai-panel" style="padding: 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; line-height: 1.6; word-break: break-word;">
+                        <h2 style="margin-bottom: 20px; color: var(--accent-color);">🌐 API 设置</h2>
+
+                        <!-- 启用第三方AI复选框已移除，统一由顶部控制 -->
+
+                        <div class="form-group">
+                            <label>API Base URL</label>
+                            <input type="text" id="thirdparty-api-base-url" placeholder="https://api.openai.com">
+                            <small style="color: var(--text-secondary);">第三方API基础地址，例如OpenAI为 https://api.openai.com</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="thirdparty-api-key" placeholder="填写第三方API Key">
+                            <small style="color: var(--text-secondary);">用于访问第三方API的密钥</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>模型名称</label>
+                            <input type="text" id="thirdparty-model" placeholder="例如 gpt-4o-mini">
+                            <small style="color: var(--text-secondary);">兼容OpenAI的模型名称</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Temperature (创造性)</label>
+                            <input type="number" id="thirdparty-temperature" min="0" max="2" step="0.1" placeholder="0.7">
+                        </div>
+
+                        <div class="form-group">
+                            <label>最大回复长度</label>
+                            <input type="number" id="thirdparty-max-tokens" min="100" max="32000" step="100" placeholder="2000">
+                        </div>
+
+                        <div class="form-group">
+                            <label>系统提示词</label>
+                            <textarea id="thirdparty-system-prompt" rows="4" placeholder="你是一个友好的AI助手..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>AI助手昵称</label>
+                            <input type="text" id="thirdparty-ai-name" placeholder="AI助手">
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-save" style="background: var(--accent-color);" onclick="testThirdpartyConnection()">🔌 测试API连接</button>
+                        </div>
+
+                        <div id="thirdparty-test-result" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 房间详情模态框 -->
+    <div id="room-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>房间详情: <span id="modal-room-id"></span></h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            
+            <h3 style="margin-bottom: 10px; color: var(--text-color);">聊天记录</h3>
+            <div class="message-list" id="modal-messages">
+                <div class="loading">加载中...</div>
+            </div>
+
+            <h3 style="margin-bottom: 10px; color: var(--text-color);">文件列表</h3>
+            <div class="file-list" id="modal-files">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件预览模态框 -->
+    <div id="preview-modal" class="preview-modal">
+        <div class="preview-header">
+            <span id="preview-filename" style="color: var(--text-color); font-weight: bold;"></span>
+        </div>
+        <button class="preview-close" onclick="closePreview()">×</button>
+        <button class="preview-download" onclick="downloadCurrentFile()">⬇️ 下载</button>
+        <div class="preview-content" id="preview-content"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // Socket.IO 连接
+        const socket = io();
+        let currentTab = 'overview';
+        let statsUpdateInterval = null;
+
+        // 监听 Socket.IO 连接状态
+        socket.on('connect', function() {
+            console.log('Socket.IO 已连接');
+            updateServerStatus(true);
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Socket.IO 已断开');
+            updateServerStatus(false);
+        });
+
+        socket.on('connect_error', function() {
+            console.log('Socket.IO 连接错误');
+            updateServerStatus(false);
+        });
+
+        // 更新服务器状态显示
+        function updateServerStatus(isOnline) {
+            const statusElem = document.getElementById('stat-status');
+            if (statusElem) {
+                if (isOnline) {
+                    statusElem.innerHTML = '<span style="color: var(--success-color);">● 运行中</span>';
+                } else {
+                    statusElem.innerHTML = '<span style="color: var(--danger-color);">● 离线</span>';
+                    // 服务器离线时清空运行时长和启动时间
+                    const uptimeElem = document.getElementById('stat-uptime');
+                    const starttimeElem = document.getElementById('stat-starttime');
+                    if (uptimeElem) uptimeElem.textContent = '-';
+                    if (starttimeElem) starttimeElem.textContent = '-';
+                }
+            }
+        }
+
+        // 监听服务器数据更新事件
+        socket.on('admin_data_update', function(data) {
+            console.log('收到数据更新通知:', data.type);
+            
+            // 根据更新类型刷新对应数据
+            if (data.type === 'stats' && currentTab === 'overview') {
+                loadStats();
+            } else if (data.type === 'rooms' && currentTab === 'rooms') {
+                loadRooms();
+            } else if (data.type === 'files' && currentTab === 'files') {
+                loadFiles();
+            } else if (data.type === 'config' && currentTab === 'config') {
+                loadConfig();
+            }
+            
+            // stats 更新时，如果当前在概览页面则刷新
+            if (data.type === 'stats' && currentTab === 'overview') {
+                loadStats();
+            }
+            // rooms 更新时，如果在房间管理页面则刷新
+            if (data.type === 'rooms' && currentTab === 'rooms') {
+                loadRooms();
+            }
+        });
+
+        // 切换标签页
+        function switchTab(tabName) {
+            currentTab = tabName;
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 显示选中的标签页
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // 加载对应数据
+            if (tabName === 'overview') {
+                loadStats();
+                // 开启定时更新运行时长
+                startStatsUpdate();
+            } else {
+                // 停止定时更新
+                stopStatsUpdate();
+                if (tabName === 'rooms') {
+                    loadRooms();
+                } else if (tabName === 'files') {
+                    loadFiles();
+                } else if (tabName === 'config') {
+                    loadConfig();
+                } else if (tabName === 'ollama') {
+                    loadAIProvider();
+                    loadOllamaConfig();
+                    loadThirdpartyConfig();
+                }
+            }
+        }
+        
+        // 开启定时更新统计数据（每5秒更新运行时长）
+        function startStatsUpdate() {
+            stopStatsUpdate(); // 先清除旧的定时器
+            statsUpdateInterval = setInterval(function() {
+                if (currentTab === 'overview' && socket.connected) {
+                    loadStats();
+                }
+            }, 5000); // 每5秒更新一次
+        }
+        
+        // 停止定时更新
+        function stopStatsUpdate() {
+            if (statsUpdateInterval) {
+                clearInterval(statsUpdateInterval);
+                statsUpdateInterval = null;
+            }
+        }
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats', { credentials: 'same-origin' });
+                // 如果未登录，跳转到登录页
+                if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                    return;
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stat-rooms').textContent = data.stats.total_rooms;
+                    document.getElementById('stat-messages').textContent = data.stats.total_messages;
+                    document.getElementById('stat-files').textContent = data.stats.total_files;
+                    document.getElementById('stat-size').textContent = data.stats.total_file_size;
+                    document.getElementById('stat-online').textContent = data.stats.online_users;
+                    // AI统计
+                    if (document.getElementById('stat-ai-requests')) {
+                        document.getElementById('stat-ai-requests').textContent = data.stats.ai_requests_total ?? 0;
+                    }
+                    if (document.getElementById('stat-ai-success-rate')) {
+                        document.getElementById('stat-ai-success-rate').textContent = data.stats.ai_success_rate ?? '0.0%';
+                    }
+                    
+                    // 显示运行时长
+                    document.getElementById('stat-uptime').textContent = data.stats.uptime || '-';
+                    
+                    // 显示启动时间
+                    document.getElementById('stat-starttime').textContent = data.stats.start_time || '-';
+                    
+                    // 显示服务器配置信息
+                    if (data.stats.server_config) {
+                        document.getElementById('config-python').textContent = data.stats.server_config.python_version;
+                        document.getElementById('config-os').textContent = data.stats.server_config.os;
+                        document.getElementById('config-processor').textContent = data.stats.server_config.processor || '-';
+                        document.getElementById('config-memory').textContent = data.stats.server_config.total_memory || '-';
+                        document.getElementById('config-disk').textContent = data.stats.server_config.total_disk || '-';
+                        document.getElementById('config-maxsize').textContent = data.stats.server_config.max_file_size;
+                        document.getElementById('config-uploadfolder').textContent = data.stats.server_config.upload_folder;
+                    }
+                    
+                    // 服务器在线，更新状态
+                    updateServerStatus(true);
+                } else {
+                    // 如果返回成功标记为 false，则将服务器状态显示为离线
+                    updateServerStatus(false);
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                // 如果请求失败，显示服务器离线
+                updateServerStatus(false);
+                // 在概览页显示一条简短错误提示（不打扰整体UI）
+                const uptimeElem = document.getElementById('stat-uptime');
+                if (uptimeElem) {
+                    uptimeElem.textContent = '-';
+                }
+            }
+        }
+
+        // 加载房间列表
+        async function loadRooms() {
+            try {
+                const tbody = document.getElementById('rooms-tbody');
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">加载中...</td></tr>';
+
+                const response = await fetch('/api/admin/rooms');
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.rooms.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">暂无房间</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.rooms.map(room => `
+                        <tr>
+                            <td><strong>${room.room_id}</strong></td>
+                            <td>${room.message_count}</td>
+                            <td>${room.file_count}</td>
+                            <td>${room.file_size}</td>
+                            <td>
+                                ${room.online_users > 0 
+                                    ? `<span class="online-badge">${room.online_users} 在线</span>` 
+                                    : '<span class="offline-badge">离线</span>'}
+                            </td>
+                            <td>${room.last_active}</td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewRoom('${room.room_id}')">查看</button>
+                                <button class="action-btn btn-delete" onclick="deleteRoom('${room.room_id}')">删除</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('加载房间列表失败:', error);
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--danger-color);">加载失败</td></tr>';
+            }
+        }
+
+        // 查看房间详情
+        async function viewRoom(roomId) {
+            try {
+                document.getElementById('modal-room-id').textContent = roomId;
+                document.getElementById('room-modal').classList.add('active');
+                
+                const response = await fetch(`/api/admin/room/${roomId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const room = data.room;
+
+                    // 显示消息列表
+                    const messagesDiv = document.getElementById('modal-messages');
+                    if (room.messages.length === 0) {
+                        messagesDiv.innerHTML = '<div style="color: var(--text-secondary); text-align: center;">暂无消息</div>';
+                    } else {
+                        messagesDiv.innerHTML = room.messages.map(msg => `
+                            <div class="message-item ${msg.type}">
+                                <span class="message-username">${msg.username}:</span>
+                                <span>${msg.message}</span>
+                                <span class="message-time">${msg.timestamp}</span>
+                            </div>
+                        `).join('');
+                    }
+
+                    // 显示文件列表
+                    const filesDiv = document.getElementById('modal-files');
+                    if (room.files.length === 0) {
+                        filesDiv.innerHTML = '<div style="color: var(--text-secondary); text-align: center;">暂无文件</div>';
+                    } else {
+                        filesDiv.innerHTML = room.files.map(file => `
+                            <div class="file-item">
+                                <span>📎 ${file}</span>
+                                <a href="/download/${file}" style="color: var(--accent-color); text-decoration: none;">下载</a>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('加载房间详情失败:', error);
+                alert('加载房间详情失败');
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('room-modal').classList.remove('active');
+        }
+
+        // 全局变量存储所有文件数据
+        let allFilesData = [];
+        let selectedFiles = new Set();
+        
+        // 加载文件列表
+        async function loadFiles() {
+            try {
+                const tbody = document.getElementById('files-tbody');
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">加载中...</td></tr>';
+
+                const response = await fetch('/api/admin/files');
+                const data = await response.json();
+
+                if (data.success) {
+                    allFilesData = data.files;
+                    selectedFiles.clear();
+                    
+                    // 显示复选框和批量操作按钮
+                    document.getElementById('select-all-checkbox').style.display = allFilesData.length > 0 ? 'inline-block' : 'none';
+                    document.getElementById('select-all-btn').style.display = allFilesData.length > 0 ? 'inline-block' : 'none';
+                    
+                    // 应用当前筛选
+                    filterFilesByType();
+                }
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger-color);">加载失败</td></tr>';
+            }
+        }
+        
+        // 按类型筛选文件
+        function filterFilesByType() {
+            const filterType = document.getElementById('file-type-filter').value;
+            const tbody = document.getElementById('files-tbody');
+            
+            let filteredFiles = allFilesData;
+            if (filterType !== 'all') {
+                filteredFiles = allFilesData.filter(file => file.file_type === filterType);
+            }
+            
+            if (filteredFiles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">暂无符合条件的文件</td></tr>';
+                updateBatchButtons();
+                return;
+            }
+            
+            tbody.innerHTML = filteredFiles.map(file => {
+                const statusBadges = [];
+                if (file.is_hashed) {
+                    statusBadges.push('<span class="file-badge badge-hashed">已缓存</span>');
+                }
+                if (file.is_orphaned) {
+                    statusBadges.push('<span class="file-badge badge-orphaned">孤立</span>');
+                } else {
+                    statusBadges.push('<span class="file-badge badge-active">活跃</span>');
+                }
+
+                const roomsText = file.referenced_rooms.length > 0 
+                    ? file.referenced_rooms.join(', ') 
+                    : '<span style="color: var(--text-secondary);">无</span>';
+
+                // 生成缩略图
+                let thumbnailHtml = '';
+                if (file.file_type === 'image') {
+                    thumbnailHtml = `<img src="/download/${file.filename}" class="file-thumbnail" onclick="previewFile('${file.filename}', '${file.file_type}')" alt="${file.filename}">`;
+                } else {
+                    const icons = {
+                        'video': '🎥',
+                        'audio': '🎵',
+                        'pdf': '📄',
+                        'text': '📝',
+                        'archive': '🗄️',
+                        'word': '📃',
+                        'excel': '📈',
+                        'powerpoint': '📊',
+                        'other': '📁'
+                    };
+                    const icon = icons[file.file_type] || '📁';
+                    thumbnailHtml = `<div class="file-icon" onclick="previewFile('${file.filename}', '${file.file_type}')">${icon}</div>`;
+                }
+                
+                const isChecked = selectedFiles.has(file.filename) ? 'checked' : '';
+
+                return `
+                    <tr data-filename="${file.filename}" data-filetype="${file.file_type}">
+                        <td><input type="checkbox" class="file-checkbox" value="${file.filename}" onchange="updateFileSelection(this)" ${isChecked}></td>
+                        <td>${thumbnailHtml}</td>
+                        <td><strong>${file.filename}</strong></td>
+                        <td>${file.size}</td>
+                        <td>${file.modified_time}</td>
+                        <td>${roomsText}</td>
+                        <td>${statusBadges.join('')}</td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="previewFile('${file.filename}', '${file.file_type}')">预览</button>
+                            <button class="action-btn btn-view" onclick="window.open('/download/${file.filename}', '_blank')">下载</button>
+                            <button class="action-btn btn-delete" onclick="deleteFile('${file.filename}')">删除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateBatchButtons();
+        }
+        
+        // 更新文件选择状态
+        function updateFileSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedFiles.add(checkbox.value);
+            } else {
+                selectedFiles.delete(checkbox.value);
+            }
+            updateBatchButtons();
+        }
+        
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+                if (cb.checked) {
+                    selectedFiles.add(cb.value);
+                } else {
+                    selectedFiles.delete(cb.value);
+                }
+            });
+            
+            updateBatchButtons();
+        }
+        
+        // 更新批量操作按钮状态
+        function updateBatchButtons() {
+            const count = selectedFiles.size;
+            const batchDeleteBtn = document.getElementById('batch-delete-btn');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            
+            if (count > 0) {
+                batchDeleteBtn.style.display = 'inline-block';
+                selectedCountSpan.style.display = 'inline';
+                selectedCountSpan.textContent = `已选择 ${count} 个文件`;
+            } else {
+                batchDeleteBtn.style.display = 'none';
+                selectedCountSpan.style.display = 'none';
+            }
+            
+            // 更新全选复选框状态
+            const allCheckboxes = document.querySelectorAll('.file-checkbox');
+            const checkedCount = document.querySelectorAll('.file-checkbox:checked').length;
+            selectAllCheckbox.checked = allCheckboxes.length > 0 && checkedCount === allCheckboxes.length;
+        }
+        
+        // 批量删除文件
+        async function batchDeleteFiles() {
+            if (selectedFiles.size === 0) {
+                alert('请先选择要删除的文件');
+                return;
+            }
+            
+            if (!confirm(`确定要删除选中的 ${selectedFiles.size} 个文件吗？该操作不可恢复。`)) {
+                return;
+            }
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const filename of selectedFiles) {
+                try {
+                    const response = await fetch(`/api/admin/file/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    console.error(`删除文件 ${filename} 失败:`, error);
+                    failCount++;
+                }
+            }
+            
+            alert(`批量删除完成！\n成功: ${successCount} 个\n失败: ${failCount} 个`);
+            
+            selectedFiles.clear();
+            loadFiles();
+            loadStats();
+        }
+
+        // 删除文件
+        async function deleteFile(filename) {
+            if (!confirm(`确定要删除文件 ${filename} 吗？该操作不可恢复。`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/file/${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('删除成功');
+                    loadFiles();
+                    loadStats();
+                } else {
+                    alert('删除失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('删除文件失败:', error);
+                alert('删除文件失败');
+            }
+        }
+
+        // 清理孤立文件
+        async function cleanupOrphanedFiles() {
+            if (!confirm('确定要清理所有孤立文件吗？孤立文件是指不被任何房间引用的文件。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/cleanup-orphaned', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    loadFiles();
+                    loadStats();
+                } else {
+                    alert('清理失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('清理失败:', error);
+                alert('清理失败');
+            }
+        }
+
+        // 删除房间
+        async function deleteRoom(roomId) {
+            if (!confirm(`确定要删除房间 ${roomId} 吗？这将同时删除该房间的所有消息和关联文件。`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/room/${roomId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('删除成功');
+                    loadRooms();
+                    loadStats();
+                } else {
+                    alert('删除失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('删除房间失败:', error);
+                alert('删除房间失败');
+            }
+        }
+
+        // 加载网站配置
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/admin/config');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('config-title').value = data.config.title || '';
+                    document.getElementById('config-description').value = data.config.description || '';
+                }
+            } catch (error) {
+                console.error('加载配置失败:', error);
+            }
+        }
+
+        // 保存网站配置
+        async function saveConfig() {
+            try {
+                const title = document.getElementById('config-title').value;
+                const description = document.getElementById('config-description').value;
+
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('配置保存成功！');
+                } else {
+                    alert('保存失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                alert('保存配置失败');
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            // 开启定时更新
+            startStatsUpdate();
+        });
+
+        // 修改管理员密码
+        async function changePassword() {
+            try {
+                const oldPassword = document.getElementById('old-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const newUsername = document.getElementById('new-username').value;
+
+                if (!oldPassword) {
+                    alert('请输入原密码');
+                    return;
+                }
+
+                if (newPassword && newPassword !== confirmPassword) {
+                    alert('两次输入的新密码不一致');
+                    return;
+                }
+
+                if (!newPassword && !newUsername) {
+                    alert('请至少修改用户名或密码');
+                    return;
+                }
+
+                const response = await fetch('/api/admin/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        old_password: oldPassword,
+                        new_password: newPassword || null,
+                        new_username: newUsername || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('账户信息更新成功！请重新登录。');
+                    window.location.href = '/admin/logout';
+                } else {
+                    alert('更新失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('更新账户信息失败:', error);
+                alert('更新账户信息失败');
+            }
+        }
+
+        // 加载Ollama配置
+        async function loadOllamaConfig() {
+            try {
+                const response = await fetch('/api/admin/ollama-config');
+                const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('ollama-enabled').checked = data.config.enabled || false;
+            document.getElementById('ollama-api-url').value = data.config.api_url || 'http://localhost:11434';
+            document.getElementById('ollama-model').value = data.config.model || 'qwen2.5:latest';
+            document.getElementById('ollama-temperature').value = data.config.temperature || 0.7;
+            document.getElementById('ollama-max-tokens').value = data.config.max_tokens || 2000;
+            document.getElementById('ollama-system-prompt').value = data.config.system_prompt || '';
+            document.getElementById('ollama-ai-name').value = data.config.ai_name || 'AI助手';
+            // 若默认提供方为Ollama，则同步到全局开关
+            if ((document.getElementById('ai-provider')?.value || 'ollama') === 'ollama') {
+                const globalToggle = document.getElementById('global-ai-enabled');
+                if (globalToggle) globalToggle.checked = !!(data.config.enabled || false);
+            }
+        }
+            } catch (error) {
+                console.error('加载Ollama配置失败:', error);
+            }
+        }
+
+        // 保存Ollama配置
+        async function saveOllamaConfig() {
+            try {
+                const config = {
+                    enabled: ((document.getElementById('ai-provider')?.value || 'ollama') === 'ollama' ? document.getElementById('global-ai-enabled').checked : false),
+                    api_url: document.getElementById('ollama-api-url').value,
+                    model: document.getElementById('ollama-model').value,
+                    temperature: parseFloat(document.getElementById('ollama-temperature').value),
+                    max_tokens: parseInt(document.getElementById('ollama-max-tokens').value),
+                    system_prompt: document.getElementById('ollama-system-prompt').value,
+                    ai_name: document.getElementById('ollama-ai-name').value.trim() || 'AI助手'
+                };
+
+                // 显示加载提示
+                const resultDiv = document.getElementById('ollama-test-result');
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'var(--card-bg)';
+                resultDiv.style.border = '1px solid var(--border-color)';
+                resultDiv.style.color = 'var(--text-secondary)';
+                resultDiv.innerHTML = '💾 正在保存...';
+
+                // 使用 Promise.race 实现超时控制
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('保存超时')), 5000)
+                );
+
+                const fetchPromise = fetch('/api/admin/ollama-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.style.background = 'var(--success-color)';
+                    resultDiv.style.border = '1px solid var(--success-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '✅ Ollama配置保存成功！';
+                    
+                    // 3秒后隐藏提示
+                    setTimeout(() => {
+                        resultDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ 保存失败: ' + data.error;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('ollama-test-result');
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'var(--danger-color)';
+                resultDiv.style.border = '1px solid var(--danger-color)';
+                resultDiv.style.color = 'white';
+                resultDiv.innerHTML = '❌ 保存失败: ' + error.message;
+            }
+        }
+
+        // 测试Ollama连接
+        async function testOllamaConnection() {
+            const resultDiv = document.getElementById('ollama-test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = 'var(--card-bg)';
+            resultDiv.style.border = '1px solid var(--border-color)';
+            resultDiv.innerHTML = '<span style="color: var(--text-secondary);">🔍 正在连接...</span>';
+
+            try {
+                // 使用当前输入框中的配置进行测试
+                const apiUrl = document.getElementById('ollama-api-url').value;
+                
+                if (!apiUrl) {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ 请先输入Ollama API地址';
+                    return;
+                }
+
+                const response = await fetch('/api/admin/ollama-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_url: apiUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.style.background = 'var(--success-color)';
+                    resultDiv.style.border = '1px solid var(--success-color)';
+                    resultDiv.style.color = 'white';
+                    let modelsHtml = '';
+                    if (data.models && data.models.length > 0) {
+                        modelsHtml = '<br><small>可用模型: ' + data.models.join(', ') + '</small>';
+                    }
+                    resultDiv.innerHTML = '✅ ' + data.message + modelsHtml;
+                } else {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ ' + data.error;
+                }
+            } catch (error) {
+                resultDiv.style.background = 'var(--danger-color)';
+                resultDiv.style.border = '1px solid var(--danger-color)';
+                resultDiv.style.color = 'white';
+                resultDiv.innerHTML = '❌ 连接失败: ' + error.message;
+            }
+        }
+
+        // 加载默认AI提供方
+        async function loadAIProvider() {
+            try {
+                const response = await fetch('/api/admin/ai-provider');
+                const data = await response.json();
+                if (data.success) {
+                    const select = document.getElementById('ai-provider');
+                    if (select) select.value = data.provider || 'ollama';
+                }
+            } catch (error) {
+                console.error('加载AI提供方失败:', error);
+            }
+        }
+
+        // 保存默认AI提供方
+        async function saveAIProvider() {
+            try {
+                const provider = document.getElementById('ai-provider').value;
+                const response = await fetch('/api/admin/ai-provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider })
+                });
+                const data = await response.json();
+                if (!data.success) alert('更新默认提供方失败: ' + (data.error || '未知错误'));
+            } catch (error) {
+                alert('更新默认提供方失败: ' + error.message);
+            }
+        }
+
+        // 统一保存AI设置（默认提供方 + 对应配置）
+        async function saveAISettings() {
+            const provider = document.getElementById('ai-provider')?.value || 'ollama';
+            await saveAIProvider();
+            if (provider === 'ollama') {
+                await saveOllamaConfig();
+            } else {
+                await saveThirdpartyConfig();
+            }
+        }
+
+        // 绑定提供方选择与全局开关变更
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('ai-provider');
+            if (select) {
+                select.addEventListener('change', async () => {
+                    await saveAIProvider();
+                    updateGlobalAIEnabledFromProvider();
+                });
+            }
+            const globalToggle = document.getElementById('global-ai-enabled');
+            if (globalToggle) {
+                globalToggle.addEventListener('change', () => {
+                    setProviderEnabled(globalToggle.checked);
+                });
+            }
+        });
+
+        // 加载第三方AI配置
+        async function loadThirdpartyConfig() {
+            try {
+                const response = await fetch('/api/admin/thirdparty-config');
+                const data = await response.json();
+                if (data.success) {
+                    const cfg = data.config || {};
+                    document.getElementById('thirdparty-api-base-url').value = cfg.api_base_url || '';
+                    document.getElementById('thirdparty-api-key').value = cfg.api_key || '';
+                    document.getElementById('thirdparty-model').value = cfg.model || '';
+                    document.getElementById('thirdparty-temperature').value = (cfg.temperature ?? 0.7);
+                    document.getElementById('thirdparty-max-tokens').value = (cfg.max_tokens ?? 2000);
+                    document.getElementById('thirdparty-system-prompt').value = cfg.system_prompt || '';
+                    document.getElementById('thirdparty-ai-name').value = cfg.ai_name || 'AI助手';
+                    // 若默认提供方为第三方，则同步到全局开关
+                    if ((document.getElementById('ai-provider')?.value || 'ollama') === 'thirdparty') {
+                        const globalToggle = document.getElementById('global-ai-enabled');
+                        if (globalToggle) globalToggle.checked = !!cfg.enabled;
+                    }
+                }
+            } catch (error) {
+                console.error('加载第三方AI配置失败:', error);
+            }
+        }
+
+        // 保存第三方AI配置
+        async function saveThirdpartyConfig() {
+            const resultDiv = document.getElementById('thirdparty-test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = 'var(--card-bg)';
+            resultDiv.style.border = '1px solid var(--border-color)';
+            resultDiv.style.color = 'var(--text-secondary)';
+            resultDiv.innerHTML = '💾 正在保存...';
+            try {
+                const config = {
+                    enabled: ((document.getElementById('ai-provider')?.value || 'ollama') === 'thirdparty' ? document.getElementById('global-ai-enabled').checked : false),
+                    api_base_url: document.getElementById('thirdparty-api-base-url').value.trim(),
+                    api_key: document.getElementById('thirdparty-api-key').value.trim(),
+                    model: document.getElementById('thirdparty-model').value.trim(),
+                    temperature: parseFloat(document.getElementById('thirdparty-temperature').value),
+                    max_tokens: parseInt(document.getElementById('thirdparty-max-tokens').value),
+                    system_prompt: document.getElementById('thirdparty-system-prompt').value,
+                    ai_name: document.getElementById('thirdparty-ai-name').value.trim() || 'AI助手'
+                };
+                const response = await fetch('/api/admin/thirdparty-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.style.background = 'var(--success-color)';
+                    resultDiv.style.border = '1px solid var(--success-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '✅ 第三方配置保存成功！';
+                    setTimeout(() => { resultDiv.style.display = 'none'; }, 3000);
+                } else {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ 保存失败: ' + (data.error || '未知错误');
+                }
+            } catch (error) {
+                resultDiv.style.background = 'var(--danger-color)';
+                resultDiv.style.border = '1px solid var(--danger-color)';
+                resultDiv.style.color = 'white';
+                resultDiv.innerHTML = '❌ 保存失败: ' + error.message;
+            }
+        }
+
+        // 测试第三方连接
+        async function testThirdpartyConnection() {
+            const resultDiv = document.getElementById('thirdparty-test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = 'var(--card-bg)';
+            resultDiv.style.border = '1px solid var(--border-color)';
+            resultDiv.innerHTML = '<span style="color: var(--text-secondary);">🔍 正在连接...</span>';
+            try {
+                const apiBaseUrl = document.getElementById('thirdparty-api-base-url').value.trim();
+                const apiKey = document.getElementById('thirdparty-api-key').value.trim();
+                if (!apiBaseUrl || !apiKey) {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ 请填写 API Base URL 与 API Key';
+                    return;
+                }
+                const response = await fetch('/api/admin/thirdparty-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_base_url: apiBaseUrl, api_key: apiKey })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.style.background = 'var(--success-color)';
+                    resultDiv.style.border = '1px solid var(--success-color)';
+                    resultDiv.style.color = 'white';
+                    const models = (data.models || []).join(', ');
+                    resultDiv.innerHTML = '✅ ' + data.message + (models ? '<br><small>可用模型: ' + models + '</small>' : '');
+                } else {
+                    resultDiv.style.background = 'var(--danger-color)';
+                    resultDiv.style.border = '1px solid var(--danger-color)';
+                    resultDiv.style.color = 'white';
+                    resultDiv.innerHTML = '❌ ' + (data.error || '连接失败');
+                }
+            } catch (error) {
+                resultDiv.style.background = 'var(--danger-color)';
+                resultDiv.style.border = '1px solid var(--danger-color)';
+                resultDiv.style.color = 'white';
+                resultDiv.innerHTML = '❌ 连接失败: ' + error.message;
+            }
+        }
+
+        // 根据当前默认提供方更新全局启用开关状态
+        function updateGlobalAIEnabledFromProvider() {
+            const provider = document.getElementById('ai-provider')?.value || 'ollama';
+            // 切换提供方时，重新加载对应配置以同步全局开关
+            if (provider === 'ollama') {
+                loadOllamaConfig();
+            } else {
+                loadThirdpartyConfig();
+            }
+        }
+
+        // 设置当前默认提供方的启用状态并保存
+        function setProviderEnabled(enabled) {
+            const provider = document.getElementById('ai-provider')?.value || 'ollama';
+            if (provider === 'ollama') {
+                const o = document.getElementById('ollama-enabled');
+                if (o) o.checked = enabled;
+                saveOllamaConfig();
+            } else {
+                saveThirdpartyConfig();
+            }
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('room-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 文件预览功能
+        let currentPreviewFile = '';
+
+        function previewFile(filename, fileType) {
+            currentPreviewFile = filename;
+            const modal = document.getElementById('preview-modal');
+            const content = document.getElementById('preview-content');
+            const filenameDisplay = document.getElementById('preview-filename');
+            
+            filenameDisplay.textContent = filename;
+            content.innerHTML = '';
+            
+            const fileUrl = `/download/${filename}`;
+            
+            if (fileType === 'image') {
+                content.innerHTML = `<img src="${fileUrl}" alt="${filename}">`;
+            } else if (fileType === 'video') {
+                content.innerHTML = `<video controls autoplay><source src="${fileUrl}">Your browser does not support the video tag.</video>`;
+            } else if (fileType === 'audio') {
+                content.innerHTML = `<audio controls autoplay><source src="${fileUrl}">Your browser does not support the audio tag.</audio>`;
+            } else if (fileType === 'pdf') {
+                content.innerHTML = `<iframe src="${fileUrl}"></iframe>`;
+            } else if (fileType === 'text') {
+                // 加载文本文件内容
+                fetch(fileUrl)
+                    .then(response => response.text())
+                    .then(text => {
+                        content.innerHTML = `<div class="text-preview">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+                    })
+                    .catch(error => {
+                        content.innerHTML = `<div class="text-preview">无法加载文本文件</div>`;
+                    });
+            } else {
+                content.innerHTML = `
+                    <div class="text-preview" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📁</div>
+                        <div style="font-size: 18px; margin-bottom: 10px;">${filename}</div>
+                        <div style="color: var(--text-secondary);">此文件类型不支持预览</div>
+                        <button class="btn-save" style="margin-top: 20px;" onclick="window.open('${fileUrl}', '_blank')">下载文件</button>
+                    </div>
+                `;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.remove('active');
+            currentPreviewFile = '';
+            // 停止视频/音频播放
+            const content = document.getElementById('preview-content');
+            content.innerHTML = '';
+        }
+
+        function downloadCurrentFile() {
+            if (currentPreviewFile) {
+                window.open(`/download/${currentPreviewFile}`, '_blank');
+            }
+        }
+
+        // 点击预览模态框外部关闭
+        document.addEventListener('DOMContentLoaded', function() {
+            const previewModal = document.getElementById('preview-modal');
+            if (previewModal) {
+                previewModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closePreview();
+                    }
+                });
+            }
+        });
+
+        // ESC键关闭预览
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePreview();
+            }
+        });
+    </script>
+</body>
+</html>

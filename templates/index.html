@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时聊天室</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-gradient-start: #0a0a0f;
+            --bg-gradient-end: #0d1117;
+            --container-bg: #010409;
+            --container-border: #161b22;
+            --header-gradient-start: #161b22;
+            --header-gradient-end: #0d1117;
+            --header-border: #21262d;
+            --text-color: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #58a6ff;
+            --input-bg: #0d1117;
+            --input-border: #30363d;
+            --input-border-focus: #58a6ff;
+            --button-bg-start: #238636;
+            --button-bg-end: #1a7f37;
+            --message-bg: #0d1117;
+            --message-user-bg: #1c2128;
+            --message-border: #21262d;
+            --exit-btn-bg: #21262d;
+            --exit-btn-color: #f85149;
+            --link-preview-bg: #161b22;
+            --link-preview-border: #30363d;
+        }
+        
+        body.light-theme {
+            --bg-gradient-start: #f6f8fa;
+            --bg-gradient-end: #ffffff;
+            --container-bg: #ffffff;
+            --container-border: #d0d7de;
+            --header-gradient-start: #f6f8fa;
+            --header-gradient-end: #ffffff;
+            --header-border: #d0d7de;
+            --text-color: #24292f;
+            --text-secondary: #57606a;
+            --accent-color: #0969da;
+            --input-bg: #ffffff;
+            --input-border: #d0d7de;
+            --input-border-focus: #0969da;
+            --button-bg-start: #1a7f37;
+            --button-bg-end: #2da44e;
+            --message-bg: #f6f8fa;
+            --message-user-bg: #ddf4ff;
+            --message-border: #d0d7de;
+            --exit-btn-bg: #ffffff;
+            --exit-btn-color: #cf222e;
+            --link-preview-bg: #f6f8fa;
+            --link-preview-border: #d0d7de;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+        
+        /* 聊天模式下容器自适应 */
+        .container.chat-mode {
+            width: 95%;
+            height: 90vh;
+            max-width: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+            padding: 20px;
+            position: relative;
+            text-align: center;
+            border-bottom: 2px solid var(--header-border);
+            transition: all 0.3s ease;
+        }
+        
+        .header-content {
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: color 0.3s ease;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            padding: 10px;
+            background: var(--exit-btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--container-border);
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+        
+        .theme-toggle:active {
+            opacity: 0.8;
+        }
+        
+        .room-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+        }
+        
+        .exit-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: var(--exit-btn-bg);
+            color: var(--exit-btn-color);
+            border: 1px solid var(--exit-btn-color);
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: none;
+            width: auto;
+        }
+        
+        .exit-btn:hover {
+            background: var(--exit-btn-color);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(248, 81, 73, 0.3);
+            transform: translateY(-50%);
+        }
+        
+        .exit-btn:active {
+            transform: translateY(-50%);
+        }
+        
+        #login-screen {
+            padding: 40px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: var(--input-border-focus);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--button-bg-start) 0%, var(--button-bg-end) 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #chat-screen {
+            display: none;
+            flex: 1;
+            flex-direction: row;
+            overflow: hidden;
+        }
+        
+        /* 成员列表侧边栏 */
+        #members-sidebar {
+            width: 250px;
+            background: var(--container-bg);
+            border-right: 1px solid var(--container-border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        
+        .members-header {
+            padding: 15px;
+            background: var(--header-gradient-start);
+            border-bottom: 1px solid var(--header-border);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .members-count {
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .members-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .member-card {
+            background: var(--message-bg);
+            border: 1px solid var(--message-border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .member-card:hover {
+            border-color: var(--accent-color);
+            transform: translateX(2px);
+        }
+        
+        .member-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .member-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .chat-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--container-bg);
+            transition: background 0.3s ease;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.system {
+            background: var(--message-bg);
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 13px;
+            font-style: italic;
+            border: 1px solid var(--message-border);
+            transition: all 0.3s ease;
+        }
+        
+        .message.user {
+            background: var(--message-user-bg);
+            border-left: 3px solid var(--accent-color);
+            border: 1px solid var(--message-border);
+            transition: all 0.3s ease;
+        }
+        
+        .message .username {
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-right: 8px;
+            transition: color 0.3s ease;
+        }
+        
+        .message .text {
+            color: var(--text-color);
+            word-wrap: break-word;
+            transition: color 0.3s ease;
+        }
+        
+        .link-preview {
+            margin-top: 10px;
+            padding: 12px;
+            background: var(--link-preview-bg);
+            border: 1px solid var(--link-preview-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .link-preview:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .link-preview-title {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .link-preview-desc {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            transition: color 0.3s ease;
+        }
+        
+        .link-preview-site {
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-style: italic;
+            opacity: 0.8;
+            transition: color 0.3s ease;
+        }
+        
+        .input-area {
+            display: flex;
+            padding: 20px;
+            gap: 10px;
+            background: var(--header-gradient-start);
+            border-top: 1px solid var(--header-border);
+            transition: all 0.3s ease;
+        }
+        
+        .attach-btn {
+            width: 45px;
+            padding: 12px;
+            background: var(--exit-btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .attach-btn:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+        
+        /* AI按钮样式 */
+        .ai-btn {
+            width: 45px;
+            padding: 12px;
+            background: var(--exit-btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .ai-btn:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+        
+        .ai-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .ai-btn.active::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4ade80;
+        }
+        
+        /* AI消息样式 */
+        .message.ai {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-left: 3px solid #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .message.ai .username {
+            color: #667eea;
+        }
+        
+        /* AI流式输出动画 */
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .ai-typing-indicator {
+            display: inline-block;
+            animation: typing 1.5s infinite;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #message-input:focus {
+            border-color: var(--input-border-focus);
+        }
+        
+        #send-btn {
+            width: 100px;
+            padding: 12px;
+        }
+        
+        .file-message {
+            background: var(--link-preview-bg);
+            border: 1px solid var(--link-preview-border);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-message:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .media-preview {
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        
+        .media-preview img {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .media-preview img:hover {
+            transform: scale(1.02);
+        }
+        
+        .media-preview video {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+            border-radius: 6px;
+            background: #000;
+        }
+        
+        .media-preview audio {
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        .upload-progress {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--message-bg);
+            border-radius: 6px;
+            border: 1px solid var(--message-border);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--input-border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #messages::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        
+        #messages::-webkit-scrollbar-thumb {
+            background: var(--input-border);
+            border-radius: 4px;
+        }
+        
+        #messages::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+        
+        /* 粘贴图片预览样式 */
+        .paste-preview-container {
+            padding: 10px;
+            background: var(--message-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        .paste-preview-container.active {
+            display: block;
+        }
+        
+        .paste-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .paste-preview-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .paste-preview-close {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            transition: color 0.3s;
+        }
+        
+        .paste-preview-close:hover {
+            color: var(--exit-btn-color);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .paste-preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .paste-preview-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .paste-preview-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .paste-preview-send {
+            background: linear-gradient(135deg, var(--button-bg-start) 0%, var(--button-bg-end) 100%);
+            color: white;
+        }
+        
+        .paste-preview-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+        }
+        
+        .paste-preview-cancel {
+            background: var(--exit-btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+        }
+        
+        .paste-preview-cancel:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-color);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* 历史记录样式 */
+        .history-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid var(--input-border);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .history-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .clear-history-btn {
+            padding: 4px 12px;
+            background: var(--exit-btn-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: auto;
+        }
+        
+        .clear-history-btn:hover {
+            color: var(--exit-btn-color);
+            border-color: var(--exit-btn-color);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .history-item:hover {
+            border-color: var(--accent-color);
+            background: var(--message-bg);
+        }
+        
+        .history-item-info {
+            flex: 1;
+            cursor: pointer;
+            min-width: 0;
+        }
+        
+        .history-room {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .history-username {
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .history-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            margin-left: 12px;
+            flex-shrink: 0;
+        }
+        
+        .history-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        .history-count {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--message-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        .history-delete {
+            margin-left: 10px;
+            padding: 4px 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            width: auto;
+        }
+        
+        .history-delete:hover {
+            color: var(--exit-btn-color);
+            border-color: var(--exit-btn-color);
+            background: var(--exit-btn-bg);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .history-list::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--input-border);
+            border-radius: 3px;
+        }
+        
+        .members-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .members-list::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        
+        .members-list::-webkit-scrollbar-thumb {
+            background: var(--input-border);
+            border-radius: 3px;
+        }
+        
+        .members-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+        
+        /* 历史记录面板样式 */
+        #history-sidebar {
+            width: 0;
+            background: var(--container-bg);
+            border-left: 1px solid var(--container-border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        
+        #history-sidebar.active {
+            width: 350px;
+        }
+        
+        .history-sidebar-header {
+            padding: 15px;
+            background: var(--header-gradient-start);
+            border-bottom: 1px solid var(--header-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .history-sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .history-close-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            transition: color 0.3s;
+        }
+        
+        .history-close-btn:hover {
+            color: var(--exit-btn-color);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .history-filter-tabs {
+            display: flex;
+            padding: 10px;
+            gap: 8px;
+            background: var(--message-bg);
+            border-bottom: 1px solid var(--message-border);
+            overflow-x: auto;
+        }
+        
+        .history-filter-tab {
+            padding: 6px 12px;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            width: auto;
+        }
+        
+        .history-filter-tab:hover {
+            border-color: var(--accent-color);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .history-filter-tab.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .history-messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .history-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--message-bg);
+            border: 1px solid var(--message-border);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .history-message:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .history-message .username {
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        
+        .history-message .text {
+            color: var(--text-color);
+            font-size: 13px;
+            word-wrap: break-word;
+            margin-bottom: 4px;
+        }
+        
+        .history-message .timestamp {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .history-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .history-messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .history-messages-container::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        
+        .history-messages-container::-webkit-scrollbar-thumb {
+            background: var(--input-border);
+            border-radius: 3px;
+        }
+        
+        .history-messages-container::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+        
+        /* 历史记录按钮样式 */
+        .history-toggle-btn {
+            width: 45px;
+            padding: 12px;
+            background: var(--exit-btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .history-toggle-btn:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+        
+        .history-toggle-btn.active {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">☀️</span>
+    </button>
+    
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🗨️ 实时聊天室</h1>
+                <div class="room-info" id="room-info">欢迎使用</div>
+            </div>
+            <button class="exit-btn" id="exit-btn" onclick="exitRoom()">退出</button>
+        </div>
+        
+        <div id="login-screen">
+            <div class="input-group">
+                <label for="username">昵称</label>
+                <input type="text" id="username" placeholder="请输入您的昵称" maxlength="20">
+            </div>
+            <div class="input-group">
+                <label for="room">房间号</label>
+                <input type="text" id="room" placeholder="请输入房间号" maxlength="20">
+            </div>
+            <button onclick="joinRoom()">进入聊天室</button>
+            
+            <!-- 历史记录区域 -->
+            <div class="history-section" id="history-section" style="display: none;">
+                <div class="history-header">
+                    <div class="history-title">📋 最近使用</div>
+                    <button class="clear-history-btn" onclick="clearAllHistory()">清空历史</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- 历史记录项将通过 JavaScript 动态插入 -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="chat-screen">
+            <!-- 成员列表侧边栏 -->
+            <div id="members-sidebar">
+                <div class="members-header">
+                    <span>👥 房间成员</span>
+                    <span class="members-count" id="members-count">0</span>
+                </div>
+                <div class="members-list" id="members-list">
+                    <!-- 成员卡片将动态添加 -->
+                </div>
+            </div>
+            
+            <!-- 聊天内容区 -->
+            <div class="chat-content">
+                <div id="messages"></div>
+                <div class="input-area" style="flex-direction: column; align-items: stretch;">
+                    <!-- 粘贴图片预览区域 -->
+                    <div id="paste-preview" class="paste-preview-container">
+                        <div class="paste-preview-header">
+                            <span class="paste-preview-title">🖼️ 粘贴的图片</span>
+                            <button class="paste-preview-close" onclick="cancelPastePreview()">✕</button>
+                        </div>
+                        <img id="paste-preview-image" class="paste-preview-image" src="" alt="预览">
+                        <div class="paste-preview-actions">
+                            <button class="paste-preview-btn paste-preview-send" onclick="sendPasteImage()">📤 发送</button>
+                            <button class="paste-preview-btn paste-preview-cancel" onclick="cancelPastePreview()">✕ 取消</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)">
+                        <button class="attach-btn" onclick="document.getElementById('file-input').click()" title="上传文件">📎</button>
+                        <button class="ai-btn" id="ai-btn" onclick="toggleAI()" title="AI助手">🤖</button>
+                        <button class="ai-btn" id="ai-rename-btn" onclick="renameAI()" title="AI改名" style="display: none; width: auto; padding: 8px 12px; font-size: 13px;">🎭 AI改名</button>
+                        <button class="history-toggle-btn" id="history-toggle-btn" onclick="toggleHistory()" title="历史记录">📜</button>
+                        <input type="text" id="message-input" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+                        <button id="send-btn" onclick="sendMessage()">发送</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 历史记录侧边栏 -->
+            <div id="history-sidebar">
+                <div class="history-sidebar-header">
+                    <div class="history-sidebar-title">📜 历史记录</div>
+                    <button class="history-close-btn" onclick="toggleHistory()">✕</button>
+                </div>
+                <div class="history-filter-tabs">
+                    <button class="history-filter-tab active" onclick="filterHistory('all', event)">💬 全部</button>
+                    <button class="history-filter-tab" onclick="filterHistory('video', event)">🎥 视频</button>
+                    <button class="history-filter-tab" onclick="filterHistory('image', event)">🖼️ 图片</button>
+                    <button class="history-filter-tab" onclick="filterHistory('file', event)">📎 文件</button>
+                </div>
+                <div class="history-messages-container" id="history-messages">
+                    <div class="history-loading">🔍 点击分类标签加载历史消息...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let socket;
+        let currentUsername = '';
+        let currentRoom = '';
+        let aiEnabled = false; // AI按钮状态
+        let customAIName = ''; // 自定义AI昵称
+        let historyPanelOpen = false; // 历史记录面板状态
+        let currentHistoryFilter = ''; // 当前历史记录过滤器
+        
+        // 历史记录管理
+        const HISTORY_KEY = 'chatroom_history';
+        const MAX_HISTORY = 10; // 最多保存10条记录
+        
+        // 主题切换功能
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (body.classList.contains('light-theme')) {
+                // 切换到深色主题
+                body.classList.remove('light-theme');
+                themeIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // 切换到浅色主题
+                body.classList.add('light-theme');
+                themeIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // 页面加载时恢复主题设置
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'light') {
+                body.classList.add('light-theme');
+                themeIcon.textContent = '🌙';
+            } else {
+                themeIcon.textContent = '☀️';
+            }
+            
+            // 加载历史记录
+            loadHistory();
+        });
+        
+        // 加载历史记录
+        function loadHistory() {
+            const historyData = getHistoryData();
+            const historySection = document.getElementById('history-section');
+            const historyList = document.getElementById('history-list');
+            
+            if (historyData.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            
+            historySection.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            historyData.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'history-item';
+                itemDiv.innerHTML = `
+                    <div class="history-item-info" onclick="fillFormFromHistory(${index})">
+                        <div class="history-room">🏠 ${escapeHtml(item.room)}</div>
+                        <div class="history-username">👤 ${escapeHtml(item.username)}</div>
+                    </div>
+                    <div class="history-meta">
+                        <div class="history-time">${formatTime(item.lastUsed)}</div>
+                        <div class="history-count">使用 ${item.visitCount} 次</div>
+                    </div>
+                    <button class="history-delete" onclick="deleteHistoryItem(${index}, event)">✕</button>
+                `;
+                historyList.appendChild(itemDiv);
+            });
+        }
+        
+        // 从历史记录填充表单
+        function fillFormFromHistory(index) {
+            const historyData = getHistoryData();
+            if (historyData[index]) {
+                document.getElementById('username').value = historyData[index].username;
+                document.getElementById('room').value = historyData[index].room;
+                // 可以选择自动聚焦到输入框
+                document.getElementById('username').focus();
+            }
+        }
+        
+        // 删除单条历史记录
+        function deleteHistoryItem(index, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除这条历史记录吗？')) {
+                const historyData = getHistoryData();
+                historyData.splice(index, 1);
+                saveHistoryData(historyData);
+                loadHistory();
+            }
+        }
+        
+        // 清空所有历史记录
+        function clearAllHistory() {
+            if (confirm('确定要清空所有历史记录吗？')) {
+                localStorage.removeItem(HISTORY_KEY);
+                loadHistory();
+            }
+        }
+        
+        // 获取历史记录数据
+        function getHistoryData() {
+            try {
+                const data = localStorage.getItem(HISTORY_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error('读取历史记录失败:', e);
+                return [];
+            }
+        }
+        
+        // 保存历史记录数据
+        function saveHistoryData(data) {
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.error('保存历史记录失败:', e);
+            }
+        }
+        
+        // 添加到历史记录
+        function addToHistory(username, room) {
+            const historyData = getHistoryData();
+            const now = new Date().toISOString();
+            
+            // 查找是否已存在相同的房间和用户名组合
+            const existingIndex = historyData.findIndex(
+                item => item.room === room && item.username === username
+            );
+            
+            if (existingIndex !== -1) {
+                // 已存在，更新时间和访问次数，并移到最前面
+                const existing = historyData.splice(existingIndex, 1)[0];
+                existing.lastUsed = now;
+                existing.visitCount += 1;
+                historyData.unshift(existing);
+            } else {
+                // 不存在，添加新记录到最前面
+                historyData.unshift({
+                    username: username,
+                    room: room,
+                    lastUsed: now,
+                    visitCount: 1
+                });
+            }
+            
+            // 限制历史记录数量
+            if (historyData.length > MAX_HISTORY) {
+                historyData.splice(MAX_HISTORY);
+            }
+            
+            saveHistoryData(historyData);
+        }
+        
+        // 格式化时间显示
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 7) return `${days}天前`;
+            
+            return date.toLocaleDateString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+        
+        function joinRoom() {
+            const username = document.getElementById('username').value.trim();
+            const room = document.getElementById('room').value.trim();
+            
+            if (!username || !room) {
+                alert('请输入昵称和房间号');
+                return;
+            }
+            
+            currentUsername = username;
+            currentRoom = room;
+            
+            // 保存到历史记录
+            addToHistory(username, room);
+            
+            // 连接Socket.IO
+            socket = io();
+            
+            // 监听连接事件
+            socket.on('connect', function() {
+                // 连接成功后加入房间
+                socket.emit('join', {
+                    username: username,
+                    room: room
+                });
+            });
+            // 监听消息
+            socket.on('message', function(data) {
+                displayMessage(data);
+                // 如果历史记录面板打开，也将消息添加到历史面板
+                if (historyPanelOpen && shouldShowInHistory(data, currentHistoryFilter)) {
+                    addMessageToHistory(data);
+                }
+            });
+            
+            // 监听链接预览更新
+            socket.on('link_preview_update', function(data) {
+                updateLinkPreview(data.message_id, data.link_preview);
+            });
+            
+            // 监听AI响应事件
+            socket.on('ai_response_start', function(data) {
+                handleAIResponseStart(data);
+            });
+            
+            socket.on('ai_response_chunk', function(data) {
+                handleAIResponseChunk(data);
+            });
+            
+            socket.on('ai_response_end', function(data) {
+                handleAIResponseEnd(data);
+            });
+            
+            socket.on('ai_response_error', function(data) {
+                handleAIResponseError(data);
+            });
+
+            // 监听AI深度思考流事件
+            socket.on('ai_reasoning_chunk', function(data) {
+                handleAIReasoningChunk(data);
+            });
+
+            socket.on('ai_reasoning_end', function(data) {
+                handleAIReasoningEnd(data);
+            });
+            
+            // 监听房间被解散通知
+            socket.on('room_disbanded', function(data) {
+                // 显示系统消息
+                displayMessage({
+                    username: '系统',
+                    message: data.message,
+                    type: 'system',
+                    timestamp: new Date().toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '-')
+                });
+                
+                // 弹窗提示，点击确定后返回主页
+                alert(data.message);
+                
+                // 断开连接并返回主页
+                if (socket) {
+                    socket.disconnect();
+                }
+                
+                // 清空消息
+                document.getElementById('messages').innerHTML = '';
+                
+                // 清空成员列表
+                document.getElementById('members-list').innerHTML = '';
+                document.getElementById('members-count').textContent = '0';
+                
+                // 重置AI按钮
+                aiEnabled = false;
+                customAIName = '';
+                const aiBtn = document.getElementById('ai-btn');
+                const renameBtn = document.getElementById('ai-rename-btn');
+                if (aiBtn) {
+                    aiBtn.classList.remove('active');
+                    aiBtn.title = 'AI助手';
+                }
+                if (renameBtn) {
+                    renameBtn.style.display = 'none';
+                }
+                
+                // 重置输入框
+                document.getElementById('username').value = '';
+                document.getElementById('room').value = '';
+                
+                // 切换回登录界面
+                document.getElementById('chat-screen').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('exit-btn').style.display = 'none';
+                document.getElementById('room-info').textContent = '欢迎使用';
+                
+                // 移除聊天模式类，恢复原始尺寸
+                document.querySelector('.container').classList.remove('chat-mode');
+                
+                // 重置变量
+                currentUsername = '';
+                currentRoom = '';
+            });
+            
+            // 监听历史消息（保留但不再自动显示）
+            socket.on('history_messages', function(data) {
+                // 不再自动显示历史消息
+            });
+            
+            // 监听房间历史记录响应
+            socket.on('room_history_response', function(data) {
+                handleHistoryResponse(data);
+            });
+            
+            // 监听房间信息
+            socket.on('room_info', function(data) {
+                // 更新头部房间信息
+                document.getElementById('room-info').textContent = 
+                    `房间: ${currentRoom} | 在线人数: ${data.count}`;
+                
+                // 更新成员列表
+                updateMembersList(data.members_detail || []);
+            });
+            // 切换到聊天界面
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            document.getElementById('exit-btn').style.display = 'block';
+            
+            // 添加聊天模式类，让容器自适应
+            document.querySelector('.container').classList.add('chat-mode');
+            
+            // 启用粘贴上传功能
+            enablePasteUpload();
+        }
+        
+        // 更新成员列表
+        function updateMembersList(membersDetail) {
+            const membersList = document.getElementById('members-list');
+            const membersCount = document.getElementById('members-count');
+            
+            // 更新成员数
+            membersCount.textContent = membersDetail.length;
+            
+            // 清空列表
+            membersList.innerHTML = '';
+            
+            // 添加成员卡片
+            membersDetail.forEach(function(member) {
+                const memberCard = document.createElement('div');
+                memberCard.className = 'member-card';
+                
+                // 判断是否是当前用户
+                const isCurrentUser = member.username === currentUsername;
+                const userIndicator = isCurrentUser ? ' (我)' : '';
+                
+                memberCard.innerHTML = `
+                    <div class="member-name">
+                        <span>👤</span>
+                        <span>${escapeHtml(member.username)}${userIndicator}</span>
+                    </div>
+                    <div class="member-time">
+                        <span>🕒</span>
+                        <span>${member.join_time}</span>
+                    </div>
+                `;
+                
+                membersList.appendChild(memberCard);
+            });
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            socket.emit('send_message', {
+                username: currentUsername,
+                room: currentRoom,
+                message: message,
+                ai_enabled: aiEnabled,
+                custom_ai_name: customAIName || null
+            });
+            
+            input.value = '';
+            input.focus();
+        }
+        
+        // 切换AI功能
+        function toggleAI() {
+            const aiBtn = document.getElementById('ai-btn');
+            const renameBtn = document.getElementById('ai-rename-btn');
+            
+            aiEnabled = !aiEnabled;
+            
+            if (aiEnabled) {
+                aiBtn.classList.add('active');
+                renameBtn.style.display = 'flex';
+                updateAIButtonTitle();
+            } else {
+                aiBtn.classList.remove('active');
+                renameBtn.style.display = 'none';
+                aiBtn.title = 'AI助手';
+            }
+        }
+        
+        // AI改名功能
+        function renameAI() {
+            const currentName = customAIName || '默认';
+            const name = prompt(`当前昵称: ${currentName}\n\n请输入新的AI助手昵称（留空恢复默认）:`, customAIName);
+            
+            if (name !== null) { // 用户没有取消
+                customAIName = name.trim();
+                updateAIButtonTitle();
+            }
+        }
+        
+        // 更新AI按钮提示
+        function updateAIButtonTitle() {
+            const aiBtn = document.getElementById('ai-btn');
+            const displayName = customAIName || '默认';
+            aiBtn.title = `AI助手（已启用） - 昵称: ${displayName}`;
+        }
+        
+        // =========================
+        // 历史记录功能
+        // =========================
+        
+        // 切换历史记录面板
+        function toggleHistory() {
+            console.log('toggleHistory 被调用, 当前状态:', historyPanelOpen);
+            const historySidebar = document.getElementById('history-sidebar');
+            const historyBtn = document.getElementById('history-toggle-btn');
+            
+            if (!historySidebar || !historyBtn) {
+                console.error('历史记录元素未找到');
+                return;
+            }
+            
+            historyPanelOpen = !historyPanelOpen;
+            
+            if (historyPanelOpen) {
+                historySidebar.classList.add('active');
+                historyBtn.classList.add('active');
+                // 首次打开时自动加载全部历史
+                if (!currentHistoryFilter) {
+                    console.log('首次打开，加载全部历史');
+                    filterHistory('all', null);
+                }
+            } else {
+                historySidebar.classList.remove('active');
+                historyBtn.classList.remove('active');
+            }
+        }
+        
+        // 过滤历史记录
+        function filterHistory(type, event) {
+            currentHistoryFilter = type;
+            
+            // 更新标签样式
+            const tabs = document.querySelectorAll('.history-filter-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // 如果没有event，手动查找对应的tab
+                tabs.forEach(tab => {
+                    const tabText = tab.textContent.trim();
+                    if ((type === 'all' && tabText.includes('全部')) ||
+                        (type === 'video' && tabText.includes('视频')) ||
+                        (type === 'image' && tabText.includes('图片')) ||
+                        (type === 'file' && tabText.includes('文件'))) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
+            
+            // 显示加载中
+            const historyMessages = document.getElementById('history-messages');
+            historyMessages.innerHTML = '<div class="history-loading">🔍 加载中...</div>';
+            
+            // 请求历史消息
+            if (socket && currentRoom) {
+                socket.emit('get_room_history', {
+                    room: currentRoom,
+                    filter: type
+                });
+            }
+        }
+        
+        // 处理历史记录响应
+        function handleHistoryResponse(data) {
+            const historyMessages = document.getElementById('history-messages');
+            
+            if (!data.success) {
+                historyMessages.innerHTML = `<div class="history-empty">❌ 加载失败: ${data.error || '未知错误'}</div>`;
+                return;
+            }
+            
+            if (data.messages.length === 0) {
+                let emptyText = '📋 暂无历史消息';
+                if (data.filter === 'video') {
+                    emptyText = '🎥 暂无视频消息';
+                } else if (data.filter === 'image') {
+                    emptyText = '🖼️ 暂无图片消息';
+                } else if (data.filter === 'file') {
+                    emptyText = '📎 暂无文件消息';
+                }
+                historyMessages.innerHTML = `<div class="history-empty">${emptyText}</div>`;
+                return;
+            }
+            
+            // 清空并显示历史消息
+            historyMessages.innerHTML = '';
+            
+            data.messages.forEach(function(msg) {
+                addMessageToHistory(msg);
+            });
+            
+            // 滚动到底部
+            historyMessages.scrollTop = historyMessages.scrollHeight;
+        }
+        
+        // 判断消息是否应该显示在历史记录中
+        function shouldShowInHistory(msg, filterType) {
+            if (filterType === 'all') {
+                return true;
+            } else if (filterType === 'video') {
+                return msg.file_info && msg.file_info.file_type === 'video';
+            } else if (filterType === 'image') {
+                return msg.file_info && msg.file_info.file_type === 'image';
+            } else if (filterType === 'file') {
+                return msg.file_info !== undefined;
+            }
+            return false;
+        }
+        
+        // 添加消息到历史面板
+        function addMessageToHistory(msg) {
+            const historyMessages = document.getElementById('history-messages');
+            if (!historyMessages) return;
+            
+            // 清空空状态提示
+            const emptyDiv = historyMessages.querySelector('.history-empty');
+            if (emptyDiv) {
+                emptyDiv.remove();
+            }
+            
+            const historyMsgDiv = document.createElement('div');
+            historyMsgDiv.className = 'history-message';
+            
+            if (msg.type === 'system') {
+                historyMsgDiv.innerHTML = `
+                    <div class="text" style="text-align: center; font-style: italic;">${escapeHtml(msg.message)}</div>
+                    <div class="timestamp">${msg.timestamp || ''}</div>
+                `;
+            } else if (msg.type === 'file' || msg.file_info) {
+                // 文件消息
+                const fileInfo = msg.file_info;
+                let filePreview = '';
+                
+                if (fileInfo && fileInfo.file_type === 'image') {
+                    filePreview = `
+                        <div class="media-preview" style="margin-top: 8px;">
+                            <img src="${fileInfo.download_url}" alt="${escapeHtml(fileInfo.original_filename || fileInfo.filename)}" 
+                                 style="max-width: 100%; max-height: 200px; border-radius: 6px; cursor: pointer;"
+                                 onclick="window.open('${fileInfo.download_url}', '_blank')">
+                        </div>
+                    `;
+                } else if (fileInfo && fileInfo.file_type === 'video') {
+                    filePreview = `
+                        <div class="media-preview" style="margin-top: 8px;">
+                            <video controls style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                                <source src="${fileInfo.download_url}" type="video/mp4">
+                            </video>
+                        </div>
+                    `;
+                } else if (fileInfo) {
+                    filePreview = `
+                        <div style="margin-top: 8px; padding: 8px; background: var(--input-bg); border-radius: 6px; cursor: pointer;"
+                             onclick="window.open('${fileInfo.download_url}', '_blank')">
+                            <div style="font-size: 12px; color: var(--accent-color);">📎 ${escapeHtml(fileInfo.original_filename || fileInfo.filename)}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">${fileInfo.size}</div>
+                        </div>
+                    `;
+                }
+                
+                historyMsgDiv.innerHTML = `
+                    <div class="username">${escapeHtml(msg.username)}</div>
+                    <div class="text">${escapeHtml(msg.message)}</div>
+                    ${filePreview}
+                    <div class="timestamp">${msg.timestamp || ''}</div>
+                `;
+            } else {
+                // 普通消息
+                const messageText = escapeHtml(msg.message);
+                const linkedText = messageText.replace(
+                    /(https?:\/\/[^\s]+)/g,
+                    '<a href="$1" target="_blank" style="color: var(--accent-color); text-decoration: underline;">$1</a>'
+                );
+                
+                historyMsgDiv.innerHTML = `
+                    <div class="username">${escapeHtml(msg.username)}</div>
+                    <div class="text">${linkedText}</div>
+                    <div class="timestamp">${msg.timestamp || ''}</div>
+                `;
+            }
+            
+            historyMessages.appendChild(historyMsgDiv);
+            // 滚动到底部
+            historyMessages.scrollTop = historyMessages.scrollHeight;
+        }
+        
+        // 处理AI响应开始
+        function handleAIResponseStart(data) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.setAttribute('data-message-id', data.message_id);
+            // 记录是否支持深度思考，供结束时判断是否显示提示
+            messageDiv.setAttribute('data-supports-reasoning', data.supports_reasoning ? '1' : '0');
+            
+            // 使用从服务器返回的AI昵称
+            const aiName = data.ai_name || 'AI助手';
+            const indicatorText = data.supports_reasoning ? '正在思考...' : '回答中…';
+            const indicatorStyle = data.supports_reasoning ? '' : 'style="animation:none;text-decoration:none;color: var(--text-secondary); font-size: 12px;"';
+            
+            const messageContent = `
+                <span class="username">${escapeHtml(aiName)}:</span>
+                <span class="text" id="ai-text-${data.message_id}">
+                    <span class="ai-typing-indicator" id="ai-indicator-${data.message_id}" ${indicatorStyle}>${indicatorText}</span>
+                </span>
+                <br/>
+                <div id="ai-reasoning-${data.message_id}" style="display:none; white-space: pre-wrap; color: var(--text-secondary); border-left: 3px solid var(--border-color); margin-top: 6px; padding-left: 8px;"></div>
+                <br/>
+                <div class="ai-content" id="ai-content-${data.message_id}"></div>
+                <div class="timestamp" style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">${data.timestamp}</div>
+            `;
+            
+            messageDiv.innerHTML = messageContent;
+            // 如果支持深度思考：让“正在思考...”可点击以展开/收起推理内容
+            try {
+                if (data.supports_reasoning) {
+                    const indicator = messageDiv.querySelector(`#ai-indicator-${data.message_id}`);
+                    const reasonDiv = messageDiv.querySelector(`#ai-reasoning-${data.message_id}`);
+                    if (indicator) {
+                        indicator.style.cursor = 'pointer';
+                        indicator.title = '点击查看思考过程';
+                        indicator.onclick = function() { toggleReason(data.message_id); };
+                    }
+                    // 默认保持隐藏，用户点击后才显示
+                }
+            } catch (e) { /* 忽略渲染按钮失败 */ }
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // 处理AI流式响应块
+        function handleAIResponseChunk(data) {
+            const container = document.getElementById(`ai-text-${data.message_id}`);
+            if (container) {
+                // 保留“正在思考”为第一行，不修改文案
+                
+                // 追加新内容到独立内容容器
+                const contentElem = document.getElementById(`ai-content-${data.message_id}`);
+                if (contentElem) {
+                    contentElem.textContent += data.content;
+                }
+                
+                // 滚动到底部
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+        
+        // 处理AI响应结束
+        function handleAIResponseEnd(data) {
+            const textElem = document.getElementById(`ai-text-${data.message_id}`);
+            if (textElem) {
+                // 移除ID，防止被再次更新
+                textElem.id = '';
+            }
+            // 思考结束：更新指示文案为“思考完成”，并取消闪烁效果与下划线
+            const indicator = document.getElementById(`ai-indicator-${data.message_id}`);
+            if (indicator) {
+                const container = indicator.closest('.message.ai');
+                const supports = container && container.getAttribute('data-supports-reasoning') === '1';
+                if (supports) {
+                    // 支持推理模型：显示“思考完成”与可点击提示
+                    indicator.textContent = '思考完成';
+                    indicator.style.animation = 'none';
+                    indicator.classList.remove('ai-typing-indicator');
+                    indicator.style.textDecoration = 'none';
+                    const existingHint = document.getElementById(`ai-reason-hint-${data.message_id}`);
+                    if (!existingHint) {
+                        const hint = document.createElement('span');
+                        hint.id = `ai-reason-hint-${data.message_id}`;
+                        hint.textContent = '点击查看思考内容';
+                        hint.style.color = 'var(--text-secondary)';
+                        hint.style.fontSize = '11px';
+                        hint.style.marginLeft = '8px';
+                        hint.style.cursor = 'pointer';
+                        hint.title = '点击展开/收起思考过程';
+                        hint.onclick = function() { toggleReason(data.message_id); };
+                        const parent = indicator.parentElement;
+                        if (parent) parent.appendChild(hint);
+                    }
+                } else {
+                    // 非推理模型：不显示“思考完成”，移除指示与推理容器
+                    const reasonDiv = document.getElementById(`ai-reasoning-${data.message_id}`);
+                    const existingHint = document.getElementById(`ai-reason-hint-${data.message_id}`);
+                    if (existingHint) existingHint.remove();
+                    if (reasonDiv) reasonDiv.remove();
+                    indicator.remove();
+                }
+            }
+        }
+        
+        // 处理AI响应错误
+        function handleAIResponseError(data) {
+            const textElem = document.getElementById(`ai-text-${data.message_id}`);
+            if (textElem) {
+                textElem.innerHTML = `<span style="color: var(--exit-btn-color);">❌ ${data.error}</span>`;
+                textElem.id = '';
+            }
+        }
+
+        // 查看/隐藏思考过程
+        function toggleReason(messageId) {
+            const div = document.getElementById(`ai-reasoning-${messageId}`);
+            if (!div) return;
+            div.style.display = (div.style.display === 'none' ? 'block' : 'none');
+        }
+
+        // 处理AI推理流事件（深度思考内容）
+        function handleAIReasoningChunk(data) {
+            const div = document.getElementById(`ai-reasoning-${data.message_id}`);
+            if (!div) return;
+            div.textContent += data.content;
+        }
+
+        function handleAIReasoningEnd(data) {
+            const div = document.getElementById(`ai-reasoning-${data.message_id}`);
+            if (!div) return;
+            // 结束可选：不做额外处理，内容已累计
+        }
+        
+        function displayMessage(data, isHistory = false) {
+            console.log('显示消息:', data); // 调试日志
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${data.type}`;
+            
+            // 为消息添加唯一ID属性
+            if (data.message_id) {
+                messageDiv.setAttribute('data-message-id', data.message_id);
+            }
+            
+            if (data.type === 'system') {
+                messageDiv.textContent = data.message;
+                // 如果有时间戳,添加时间显示
+                if (data.timestamp) {
+                    const timeSpan = document.createElement('span');
+                    timeSpan.style.fontSize = '11px';
+                    timeSpan.style.marginLeft = '8px';
+                    timeSpan.style.color = '#6e7681';
+                    timeSpan.textContent = data.timestamp;
+                    messageDiv.appendChild(timeSpan);
+                }
+            } else if (data.type === 'file') {
+                // 文件消息
+                let timestampHTML = '';
+                if (data.timestamp) {
+                    timestampHTML = `<span style="font-size: 11px; color: #6e7681; margin-left: 10px;">${data.timestamp}</span>`;
+                }
+                
+                messageDiv.innerHTML = `
+                    <span class="username">${escapeHtml(data.username)}:</span>
+                    <span class="text">${escapeHtml(data.message)}</span>
+                    ${timestampHTML}
+                `;
+                
+                // 添加文件卡片或媒体预览
+                if (data.file_info) {
+                    addFilePreview(messageDiv, data.file_info);
+                }
+            } else {
+                // 将URL转换为可点击的链接
+                const messageText = escapeHtml(data.message);
+                const linkedText = messageText.replace(
+                    /(https?:\/\/[^\s]+)/g,
+                    '<a href="$1" target="_blank" style="color: #58a6ff; text-decoration: underline;">$1</a>'
+                );
+                
+                let timestampHTML = '';
+                if (data.timestamp) {
+                    timestampHTML = `<span style="font-size: 11px; color: #6e7681; margin-left: 10px;">${data.timestamp}</span>`;
+                }
+                
+                messageDiv.innerHTML = `
+                    <span class="username">${escapeHtml(data.username)}:</span>
+                    <span class="text">${linkedText}</span>
+                    ${timestampHTML}
+                `;
+                
+                // 如果有链接预览,添加预览卡片
+                if (data.link_preview) {
+                    addPreviewCard(messageDiv, data.link_preview);
+                }
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            
+            // 只有非历史消息才自动滚动到底部
+            if (!isHistory) {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+        
+        function addPreviewCard(messageDiv, preview) {
+            // 添加链接预览卡片到消息元素
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'link-preview';
+            previewDiv.onclick = () => window.open(preview.url, '_blank');
+            
+            let previewHTML = '';
+            if (preview.title) {
+                previewHTML += `<div class="link-preview-title">${escapeHtml(preview.title)}</div>`;
+            }
+            if (preview.description) {
+                previewHTML += `<div class="link-preview-desc">${escapeHtml(preview.description)}</div>`;
+            }
+            if (preview.site_name) {
+                previewHTML += `<div class="link-preview-site">📎 ${escapeHtml(preview.site_name)}</div>`;
+            }
+            
+            previewDiv.innerHTML = previewHTML;
+            messageDiv.appendChild(previewDiv);
+        }
+        
+        function updateLinkPreview(messageId, linkPreview) {
+            // 更新消息的链接预览
+            const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageDiv && linkPreview) {
+                // 检查是否已经有预览卡片
+                const existingPreview = messageDiv.querySelector('.link-preview');
+                if (!existingPreview) {
+                    addPreviewCard(messageDiv, linkPreview);
+                }
+            }
+        }
+        
+        // 添加文件预览（图片/视频/音频或普通文件）
+        function addFilePreview(messageDiv, fileInfo) {
+            const filename = fileInfo.filename.toLowerCase();
+            const downloadUrl = fileInfo.download_url;
+            
+            // 图片文件格式
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+            // 视频文件格式
+            const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
+            // 音频文件格式
+            const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
+            
+            const ext = filename.split('.').pop();
+            
+            if (imageExts.includes(ext)) {
+                // 图片预览
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'media-preview';
+                previewDiv.innerHTML = `
+                    <img src="${downloadUrl}" alt="${escapeHtml(fileInfo.filename)}" onclick="window.open('${downloadUrl}', '_blank')" />
+                `;
+                messageDiv.appendChild(previewDiv);
+            } else if (videoExts.includes(ext)) {
+                // 视频预览
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'media-preview';
+                previewDiv.innerHTML = `
+                    <video controls>
+                        <source src="${downloadUrl}" type="video/${ext === 'mkv' ? 'x-matroska' : ext}">
+                        你的浏览器不支持视频播放。
+                    </video>
+                `;
+                messageDiv.appendChild(previewDiv);
+            } else if (audioExts.includes(ext)) {
+                // 音频预览
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'media-preview';
+                
+                // 为不同的音频格式设置正确的 MIME 类型
+                let mimeType = 'audio/' + ext;
+                if (ext === 'm4a') {
+                    mimeType = 'audio/mp4'; // m4a 使用 audio/mp4 MIME 类型
+                } else if (ext === 'mp3') {
+                    mimeType = 'audio/mpeg';
+                } else if (ext === 'ogg') {
+                    mimeType = 'audio/ogg';
+                } else if (ext === 'wav') {
+                    mimeType = 'audio/wav';
+                } else if (ext === 'aac') {
+                    mimeType = 'audio/aac';
+                }
+                
+                previewDiv.innerHTML = `
+                    <audio controls preload="metadata">
+                        <source src="${downloadUrl}" type="${mimeType}">
+                        你的浏览器不支持音频播放。
+                    </audio>
+                `;
+                messageDiv.appendChild(previewDiv);
+            } else {
+                // 普通文件，显示下载卡片
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-message';
+                fileDiv.onclick = () => window.location.href = downloadUrl;
+                
+                // 根据文件类型选择图标
+                let icon = '📄'; // 默认文档图标
+                if (['pdf'].includes(ext)) icon = '📝';
+                else if (['doc', 'docx'].includes(ext)) icon = '📃';
+                else if (['xls', 'xlsx'].includes(ext)) icon = '📈';
+                else if (['ppt', 'pptx'].includes(ext)) icon = '📊';
+                else if (['zip', 'rar', '7z'].includes(ext)) icon = '🗄️';
+                else if (['txt'].includes(ext)) icon = '📝';
+                
+                fileDiv.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <span class="file-icon">${icon}</span>
+                        <div>
+                            <div class="file-name">${escapeHtml(fileInfo.filename)}</div>
+                            <div class="file-size">大小: ${fileInfo.size}</div>
+                        </div>
+                    </div>
+                `;
+                messageDiv.appendChild(fileDiv);
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function exitRoom() {
+            if (socket) {
+                socket.emit('leave', {
+                    username: currentUsername,
+                    room: currentRoom
+                });
+                socket.disconnect();
+            }
+            
+            // 清空消息
+            document.getElementById('messages').innerHTML = '';
+            
+            // 清空成员列表
+            document.getElementById('members-list').innerHTML = '';
+            document.getElementById('members-count').textContent = '0';
+            
+            // 重置AI按钮
+            aiEnabled = false;
+            customAIName = '';
+            const aiBtn = document.getElementById('ai-btn');
+            const renameBtn = document.getElementById('ai-rename-btn');
+            if (aiBtn) {
+                aiBtn.classList.remove('active');
+                aiBtn.title = 'AI助手';
+            }
+            if (renameBtn) {
+                renameBtn.style.display = 'none';
+            }
+            
+            // 重置历史记录面板
+            historyPanelOpen = false;
+            currentHistoryFilter = '';
+            const historySidebar = document.getElementById('history-sidebar');
+            const historyBtn = document.getElementById('history-toggle-btn');
+            if (historySidebar) {
+                historySidebar.classList.remove('active');
+            }
+            if (historyBtn) {
+                historyBtn.classList.remove('active');
+            }
+            const historyMessages = document.getElementById('history-messages');
+            if (historyMessages) {
+                historyMessages.innerHTML = '<div class="history-loading">🔍 点击分类标签加载历史消息...</div>';
+            }
+            
+            // 重置输入框
+            document.getElementById('username').value = '';
+            document.getElementById('room').value = '';
+            
+            // 切换回登录界面
+            document.getElementById('chat-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('exit-btn').style.display = 'none';
+            document.getElementById('room-info').textContent = '欢迎使用';
+            
+            // 移除聊天模式类，恢复原始尺寸
+            document.querySelector('.container').classList.remove('chat-mode');
+            
+            // 重置变量
+            currentUsername = '';
+            currentRoom = '';
+        }
+        
+        // 文件选择处理
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 检查文件大小 (5GB = 5 * 1024 * 1024 * 1024)
+            const maxSize = 5 * 1024 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('文件大小超过限制（5GB）');
+                event.target.value = '';
+                return;
+            }
+            
+            uploadFile(file);
+            event.target.value = ''; // 清空输入，允许上传相同文件
+        }
+        
+        // 上传文件
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('room', currentRoom);
+            formData.append('username', currentUsername);
+            
+            // 使用随机 ID 以支持多个同时上传
+            const progressId = 'progress-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            // 显示上传进度
+            const messagesDiv = document.getElementById('messages');
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'upload-progress';
+            progressDiv.id = 'container-' + progressId;
+            progressDiv.innerHTML = `
+                <div>正在上传: ${escapeHtml(file.name)}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="${progressId}" style="width: 0%">0%</div>
+                </div>
+            `;
+            messagesDiv.appendChild(progressDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // 使用 XMLHttpRequest 以便跟踪上传进度
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    const progressFill = document.getElementById(progressId);
+                    if (progressFill) {
+                        progressFill.style.width = percentComplete + '%';
+                        progressFill.textContent = percentComplete + '%';
+                    }
+                }
+            });
+            
+            xhr.addEventListener('load', function() {
+                // 延迟移除进度条，等待Socket.IO消息到达
+                setTimeout(function() {
+                    const container = document.getElementById('container-' + progressId);
+                    if (container) {
+                        container.remove();
+                    }
+                }, 500);
+                
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            console.log('文件上传成功:', response.filename);
+                        } else if (response.error) {
+                            alert('文件上传失败: ' + response.error);
+                        }
+                    } catch (e) {
+                        console.error('解析响应失败:', e);
+                        alert('文件上传失败');
+                    }
+                } else {
+                    alert('文件上传失败 (HTTP ' + xhr.status + ')');
+                }
+            });
+            
+            xhr.addEventListener('error', function() {
+                const container = document.getElementById('container-' + progressId);
+                if (container) {
+                    container.remove();
+                }
+                alert('文件上传错误');
+            });
+            
+            xhr.open('POST', '/upload');
+            xhr.send(formData);
+        }
+        
+        // 粘贴图片相关变量
+        let pastedImageFile = null;
+        
+        // 启用粘贴上传功能
+        function enablePasteUpload() {
+            document.addEventListener('paste', function(e) {
+                // 检查是否在聊天界面
+                if (!currentRoom || document.getElementById('chat-screen').style.display !== 'flex') {
+                    return;
+                }
+                
+                const items = e.clipboardData.items;
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    
+                    // 检查是否为图片
+                    if (item.type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        
+                        const blob = item.getAsFile();
+                        if (blob) {
+                            // 创建一个有意义的文件名
+                            const timestamp = new Date().getTime();
+                            const fileName = `粘贴图片_${timestamp}.png`;
+                            
+                            // 创建 File 对象
+                            pastedImageFile = new File([blob], fileName, { type: blob.type });
+                            
+                            // 显示预览
+                            showPastePreview(blob);
+                        }
+                        break;
+                    }
+                }
+            });
+        }
+        
+        // 显示粘贴图片预览
+        function showPastePreview(blob) {
+            const previewContainer = document.getElementById('paste-preview');
+            const previewImage = document.getElementById('paste-preview-image');
+            
+            console.log('显示粘贴图片预览, 文件大小:', blob.size, 'bytes');
+            
+            // 创建图片URL
+            const imageUrl = URL.createObjectURL(blob);
+            previewImage.src = imageUrl;
+            
+            // 显示预览容器
+            previewContainer.classList.add('active');
+        }
+        
+        // 发送粘贴的图片
+        function sendPasteImage() {
+            if (pastedImageFile) {
+                console.log('准备上传粘贴的图片:', pastedImageFile.name);
+                
+                // 先保存文件引用
+                const fileToUpload = pastedImageFile;
+                
+                // 隐藏预览
+                cancelPastePreview();
+                
+                // 上传文件
+                uploadFile(fileToUpload);
+            } else {
+                console.error('没有找到粘贴的图片文件');
+            }
+        }
+        
+        // 取消粘贴预览
+        function cancelPastePreview() {
+            const previewContainer = document.getElementById('paste-preview');
+            const previewImage = document.getElementById('paste-preview-image');
+            
+            // 隐藏预览容器
+            previewContainer.classList.remove('active');
+            
+            // 清空图片和文件
+            if (previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+            }
+            previewImage.src = '';
+            pastedImageFile = null;
+        }
+        
+        // 页面关闭时离开房间
+        window.addEventListener('beforeunload', function() {
+            if (socket) {
+                socket.emit('leave', {
+                    username: currentUsername,
+                    room: currentRoom
+                });
+            }
+        });
+    </script>
+</body>
+</html>
