@@ -417,7 +417,6 @@ python app.py
 如有问题和疑问：
 - GitHub Issues: https://github.com/ChungGao/BlackRoom/issues
 - 作者: ChungGao
-- 邮箱: belison.gao@gmail.com
 
 ## 🙏 致谢
 
@@ -715,7 +714,6 @@ MIT License
 
 - GitHub Issues: https://github.com/ChungGao/BlackRoom/issues
 - Author: ChungGao
-- Email: belison.gao@gmail.com
 
 ## Acknowledgments
 
